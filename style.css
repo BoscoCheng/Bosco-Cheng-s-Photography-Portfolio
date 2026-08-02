@@ -395,7 +395,7 @@ header#Portfolio {
   margin-bottom: 2rem;
   color: var(--text-dark);
   line-height: 1.75rem;
-  text-align: center;
+  text-align: justify;
 }
 
 .about__btn {
@@ -698,7 +698,11 @@ header#Portfolio {
     margin-inline-start: unset;
   }
 
-  .about__content :is(p, .about__btn) {
+  .about__content p {
+    text-align: justify;
+  }
+
+  .about__content .about__btn {
     text-align: left;
   }
 
