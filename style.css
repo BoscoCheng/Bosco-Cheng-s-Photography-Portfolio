@@ -87,6 +87,7 @@ body {
 
 body {
   font-family: "Poppins", sans-serif;
+  overflow-x: hidden;
 }
 
 .portfolio-page {
@@ -589,13 +590,133 @@ header#Portfolio {
   text-align: center;
 }
 
-@media (width > 540px) {
+@media (max-width: 767px) {
+  .section__container {
+    padding: 2.75rem 1rem;
+  }
+
+  .section__header {
+    font-size: clamp(1.7rem, 5vw, 2.25rem);
+  }
+
+  .nav__header {
+    padding: 0.85rem 1rem;
+  }
+
+  .nav__logo img {
+    width: 170px !important;
+  }
+
+  .nav__links {
+    gap: 1.25rem;
+    padding: 1.25rem 1rem 1.75rem;
+  }
+
+  .portfolio-links {
+    gap: 0.55rem;
+  }
+
+  .portfolio-links a {
+    padding: 0.7rem 0.95rem;
+    font-size: 0.95rem;
+  }
+
+  .header__container {
+    gap: 1.25rem;
+  }
+
+  .header__content {
+    padding-block: 1.75rem 2rem;
+  }
+
   .header__content h1 {
-    font-size: 4.75rem;
+    font-size: clamp(2rem, 8vw, 2.8rem);
+  }
+
+  .header__content h2 {
+    font-size: clamp(1.1rem, 4vw, 1.6rem);
+    margin-bottom: 1.25rem;
+  }
+
+  .about__content .section__header {
+    margin-bottom: 1.75rem;
+  }
+
+  .about__content p {
+    text-align: left;
+    margin-bottom: 1.25rem;
+  }
+
+  .about__btn {
+    margin-top: 1.5rem;
+  }
+
+  .portfolio__grid {
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+    margin-top: 2rem;
+  }
+
+  .portfolio__grid > div {
+    gap: 0.7rem;
+  }
+
+  .portfolio__grid > .landscape-row {
+    grid-template-columns: 1fr;
+  }
+
+  .contact__content {
+    padding-block: 2.5rem 3rem;
+  }
+
+  .contact__content p {
+    text-align: left;
+  }
+
+  .input__row {
+    display: block;
+  }
+
+  .footer__container {
+    gap: 2rem;
+  }
+
+  .footer__col .section__header {
+    font-size: 1.6rem;
+  }
+
+  .quick-links-wrapper {
+    right: 0.7rem;
+    bottom: 0.8rem;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 700px) {
+  .section__container {
+    padding: 2rem 1rem;
+  }
+
+  .header__content {
+    padding-block: 1rem 1.5rem;
+  }
+
+  .header__content h1 {
+    font-size: clamp(1.8rem, 4vw, 2.3rem);
+  }
+
+  .header__content h2 {
+    font-size: clamp(1rem, 2.8vw, 1.3rem);
+    margin-bottom: 0.9rem;
   }
 
   .portfolio__grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (width > 540px) {
+  .header__content h1 {
+    font-size: 4.75rem;
   }
 
   .input__row {
