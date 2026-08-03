@@ -631,11 +631,15 @@ header#Portfolio {
 
   .header__content h1 {
     font-size: clamp(2rem, 8vw, 2.8rem);
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
 
   .header__content h2 {
     font-size: clamp(1.1rem, 4vw, 1.6rem);
     margin-bottom: 1.25rem;
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
 
   .about__content .section__header {
@@ -645,10 +649,20 @@ header#Portfolio {
   .about__content p {
     text-align: left;
     margin-bottom: 1.25rem;
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
 
   .about__btn {
     margin-top: 1.5rem;
+    width: 100%;
+  }
+
+  .about__btn .btn {
+    display: inline-block;
+    width: 100%;
+    max-width: 100%;
+    text-align: center;
   }
 
   .portfolio__grid {
@@ -671,6 +685,12 @@ header#Portfolio {
 
   .contact__content p {
     text-align: left;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .contact__content .btn {
+    width: 100%;
   }
 
   .input__row {
@@ -688,6 +708,12 @@ header#Portfolio {
   .quick-links-wrapper {
     right: 0.7rem;
     bottom: 0.8rem;
+    max-width: calc(100vw - 1.4rem);
+  }
+
+  .quick-links-toggle {
+    max-width: 100%;
+    white-space: nowrap;
   }
 }
 
