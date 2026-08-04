@@ -687,10 +687,17 @@ header#Portfolio {
 
   .portfolio__grid > div {
     gap: 0.7rem;
+    min-height: auto;
+    align-items: flex-start;
   }
 
   .portfolio__grid > .landscape-row {
     grid-template-columns: 1fr;
+  }
+
+  .section__header {
+    margin-bottom: 1.25rem;
+    scroll-margin-top: 6rem;
   }
 
   .contact__content {
