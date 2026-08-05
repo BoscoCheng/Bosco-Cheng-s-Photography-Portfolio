@@ -80,6 +80,11 @@ const portfolioImages = document.querySelectorAll(".portfolio__grid img, .about_
 portfolioImages.forEach((img) => {
   img.addEventListener("contextmenu", (e) => e.preventDefault());
   img.addEventListener("dragstart", (e) => e.preventDefault());
+
+  if (!img.closest("nav") && img.closest(".portfolio__grid")) {
+    img.loading = "lazy";
+    img.decoding = "async";
+  }
 });
 
 if (quickLinksToggle && quickLinksPanel) {
