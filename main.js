@@ -81,12 +81,70 @@ const portfolioImages = document.querySelectorAll(".portfolio__grid img, .about_
 portfolioImages.forEach((img) => {
   img.addEventListener("contextmenu", (e) => e.preventDefault());
   img.addEventListener("dragstart", (e) => e.preventDefault());
-
-  if (isPortfolioPage && img.closest(".portfolio__grid")) {
-    img.loading = "lazy";
-    img.decoding = "async";
-  }
 });
+
+if (isPortfolioPage) {
+  const pageLoader = document.getElementById("page-loader");
+  const galleryImages = Array.from(document.querySelectorAll(".portfolio__grid img"));
+
+  const preloadPromises = galleryImages.map((img) => {
+    const src = img.dataset.src;
+    if (!src) {
+      return Promise.resolve();
+    }
+
+    const preloader = new Image();
+    preloader.src = src;
+    preloader.loading = "eager";
+    preloader.decoding = "sync";
+
+    return new Promise((resolve) => {
+      const finish = () => {
+        if (typeof preloader.decode === "function") {
+          preloader.decode().catch(() => {}).then(resolve);
+        } else {
+          resolve();
+        }
+      };
+
+      preloader.addEventListener("load", finish, { once: true });
+      preloader.addEventListener("error", resolve, { once: true });
+    });
+  });
+
+  const pageLoaded =
+    document.readyState === "complete"
+      ? Promise.resolve()
+      : new Promise((resolve) => {
+          window.addEventListener("load", resolve, { once: true });
+        });
+
+  Promise.all([pageLoaded, Promise.all(preloadPromises)]).then(() => {
+    galleryImages.forEach((img) => {
+      const src = img.dataset.src;
+      if (src) {
+        img.src = src;
+        img.removeAttribute("data-src");
+        img.loading = "eager";
+        img.decoding = "sync";
+      }
+    });
+
+    const domDecodePromises = galleryImages.map((img) => {
+      if (typeof img.decode === "function") {
+        return img.decode().catch(() => {});
+      }
+      return Promise.resolve();
+    });
+
+    Promise.all(domDecodePromises).then(() => {
+      if (pageLoader) {
+        pageLoader.classList.add("page-loader--hidden");
+        pageLoader.setAttribute("aria-hidden", "true");
+      }
+    });
+  });
+}
 
 if (quickLinksToggle && quickLinksPanel) {
   quickLinksToggle.addEventListener("click", () => {
