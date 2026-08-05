@@ -20,24 +20,17 @@ navLinks.addEventListener("click", (e) => {
 const scrollRevealOption = {
   distance: "50px",
   origin: "bottom",
-  duration: 1000,
+  duration: 900,
 };
 
 ScrollReveal().reveal(".header__image img", {
   ...scrollRevealOption,
   origin: "right",
 });
-ScrollReveal().reveal(".header__content h1", {
+ScrollReveal().reveal(".header__content h1, .header__content h2, .header__btn", {
   ...scrollRevealOption,
-  delay: 500,
-});
-ScrollReveal().reveal(".header__content h2", {
-  ...scrollRevealOption,
-  delay: 1000,
-});
-ScrollReveal().reveal(".header__btn", {
-  ...scrollRevealOption,
-  delay: 1500,
+  delay: 400,
+  interval: 200,
 });
 
 ScrollReveal().reveal(".about__image img", {
@@ -46,41 +39,42 @@ ScrollReveal().reveal(".about__image img", {
 });
 ScrollReveal().reveal(".about__content .section__header", {
   ...scrollRevealOption,
-  delay: 500,
+  delay: 400,
 });
 ScrollReveal().reveal(".about__content p", {
   ...scrollRevealOption,
-  delay: 1000,
-  interval: 500,
+  delay: 900,
+  interval: 400,
 });
 ScrollReveal().reveal(".about__btn", {
   ...scrollRevealOption,
-  delay: 2000,
+  delay: 1600,
 });
 
 ScrollReveal().reveal(".blog__card", {
-  duration: 1000,
-  interval: 500,
+  duration: 900,
+  interval: 400,
 });
 
 ScrollReveal().reveal(".blog__btn", {
   ...scrollRevealOption,
-  delay: 2000,
+  delay: 1600,
 });
 
 ScrollReveal().reveal(".contact__image img", {
   ...scrollRevealOption,
 });
 
-const portfolioImages = document.querySelectorAll(".portfolio__grid img, .about__image img, .header__image img, .contact__image img");
+const allImages = document.querySelectorAll("img");
 const isPortfolioPage = document.body.classList.contains("portfolio-page");
 
-portfolioImages.forEach((img) => {
+allImages.forEach((img) => {
   img.addEventListener("contextmenu", (e) => e.preventDefault());
   img.addEventListener("dragstart", (e) => e.preventDefault());
   img.decoding = "async";
   img.loading = "eager";
   img.importance = "high";
+  img.setAttribute("fetchpriority", "high");
 });
 
 if (isPortfolioPage) {
