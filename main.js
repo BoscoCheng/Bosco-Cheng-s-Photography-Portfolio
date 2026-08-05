@@ -104,10 +104,10 @@ if (isPortfolioPage) {
       img.src = src;
     });
 
-  const loadAllImages = Promise.all(uniqueSrcs.map(preloadImage));
-  const timeout = new Promise((resolve) => setTimeout(resolve, 12000));
+  const loadAllImages = Promise.allSettled(uniqueSrcs.map(preloadImage));
+  const maxWait = new Promise((resolve) => setTimeout(resolve, 8000));
 
-  Promise.race([loadAllImages, timeout]).then(() => {
+  Promise.race([loadAllImages, maxWait]).then(() => {
     if (pageLoader) {
       pageLoader.classList.add("page-loader--hidden");
       pageLoader.setAttribute("aria-hidden", "true");
