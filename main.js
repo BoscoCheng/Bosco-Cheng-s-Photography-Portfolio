@@ -177,13 +177,37 @@ if (quickLinkButtons.length && quickLinksPanel) {
   };
 
   quickLinkButtons.forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
       setPanelState(!quickLinksPanel.classList.contains("open"));
     });
   });
 
   quickLinksPanel.addEventListener("click", (event) => {
-    if (event.target.closest("a")) {
+    const link = event.target.closest("a");
+    if (!link) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const href = link.getAttribute("href");
+    if (href && href.startsWith("#")) {
+      const target = document.querySelector(href);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState(null, "", href);
+        }
+      }
+    }
+
+    setPanelState(false);
+  });
+
+  document.addEventListener("click", (event) => {
+    const clickedInsideQuickLinks = event.target.closest(".quick-links-wrapper");
+    if (!clickedInsideQuickLinks && quickLinksPanel.classList.contains("open")) {
       setPanelState(false);
     }
   });
