@@ -72,104 +72,12 @@ ScrollReveal().reveal(".contact__image img", {
   ...scrollRevealOption,
 });
 
-const isPortfolioPage = document.body.classList.contains("portfolio-page");
 const portfolioImages = document.querySelectorAll(".portfolio__grid img, .about__image img, .header__image img, .contact__image img");
 
 portfolioImages.forEach((img) => {
   img.addEventListener("contextmenu", (e) => e.preventDefault());
   img.addEventListener("dragstart", (e) => e.preventDefault());
 });
-
-if (isPortfolioPage) {
-  const pageLoader = document.getElementById("page-loader");
-  const galleryImages = Array.from(document.querySelectorAll(".portfolio__grid img"));
-
-  const getFallbackSrc = (src) => {
-    if (!src || !src.toLowerCase().endsWith(".webp")) {
-      return null;
-    }
-
-    const alternatives = ["Jpg", "jpg", "JPG", "jpeg", "JPEG", "jpg"];
-    return alternatives
-      .map((dir) => src.replace(/\/WebP\//, `/${dir}/`).replace(/\.webp$/i, ".jpg"))
-      .concat(
-        alternatives.map((dir) => src.replace(/\/WebP\//, `/${dir}/`).replace(/\.webp$/i, ".jpeg"))
-      );
-  };
-
-  const decodeImage = (img) =>
-    img.decode ? img.decode().catch(() => undefined) : Promise.resolve();
-
-  const loadImage = (img) => {
-    const src = img.currentSrc || img.src || img.getAttribute("src");
-    if (!src) {
-      return Promise.resolve();
-    }
-
-    img.loading = "eager";
-    img.decoding = "sync";
-
-    const fallbacks = getFallbackSrc(src) || [];
-    const sources = [src, ...fallbacks];
-
-    const trySource = (source) =>
-      new Promise((resolve) => {
-        const onLoad = async () => {
-          cleanup();
-          await decodeImage(img);
-          resolve(true);
-        };
-
-        const onError = () => {
-          cleanup();
-          resolve(false);
-        };
-
-        const cleanup = () => {
-          img.removeEventListener("load", onLoad);
-          img.removeEventListener("error", onError);
-        };
-
-        img.addEventListener("load", onLoad, { once: true });
-        img.addEventListener("error", onError, { once: true });
-        img.src = source;
-      });
-
-    const loadWithFallbacks = async () => {
-      if (img.complete && img.naturalWidth !== 0) {
-        await decodeImage(img);
-        return true;
-      }
-
-      for (const source of sources) {
-        const loaded = await trySource(source);
-        if (loaded) {
-          return true;
-        }
-      }
-
-      return false;
-    };
-
-    return loadWithFallbacks();
-  };
-
-  const pageLoaded =
-    document.readyState === "complete"
-      ? Promise.resolve()
-      : new Promise((resolve) => {
-          window.addEventListener("load", resolve, { once: true });
-        });
-
-  const loadPromises = galleryImages.map(loadImage);
-
-  Promise.all([pageLoaded, Promise.all(loadPromises)]).then(() => {
-    if (pageLoader) {
-      pageLoader.classList.add("page-loader--hidden");
-      pageLoader.setAttribute("aria-hidden", "true");
-    }
-  });
-}
 
 const quickLinkButtons = document.querySelectorAll(".quick-links-toggle");
 const quickLinksPanel = document.querySelector(".quick-links-panel");
