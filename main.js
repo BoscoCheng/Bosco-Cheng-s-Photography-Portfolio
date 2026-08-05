@@ -106,12 +106,19 @@ if (isPortfolioPage) {
 
   const waitForDomImage = (img) =>
     new Promise((resolve) => {
-      if (img.complete && img.naturalWidth !== 0) {
-        decodeImage(img).then(resolve);
+      if (img.complete) {
+        decodeImage(img).then(resolve).catch(resolve);
         return;
       }
 
+      const timeoutId = window.setTimeout(() => {
+        img.removeEventListener("load", done);
+        img.removeEventListener("error", done);
+        resolve();
+      }, 15000);
+
       const done = () => {
+        window.clearTimeout(timeoutId);
         img.removeEventListener("load", done);
         img.removeEventListener("error", done);
         decodeImage(img).then(resolve).catch(resolve);
