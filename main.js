@@ -72,9 +72,6 @@ ScrollReveal().reveal(".contact__image img", {
   ...scrollRevealOption,
 });
 
-const quickLinksToggle = document.querySelector(".quick-links-toggle");
-const quickLinksPanel = document.querySelector(".quick-links-panel");
-
 const isPortfolioPage = document.body.classList.contains("portfolio-page");
 const portfolioImages = document.querySelectorAll(".portfolio__grid img, .about__image img, .header__image img, .contact__image img");
 
@@ -100,58 +97,61 @@ if (isPortfolioPage) {
       );
   };
 
+  const decodeImage = (img) =>
+    img.decode ? img.decode().catch(() => undefined) : Promise.resolve();
+
   const loadImage = (img) => {
-    const src = img.dataset.src;
+    const src = img.currentSrc || img.src || img.getAttribute("src");
     if (!src) {
       return Promise.resolve();
     }
 
     img.loading = "eager";
     img.decoding = "sync";
-    img.src = src;
 
-    return new Promise((resolve) => {
-      const onLoad = () => {
-        img.removeAttribute("data-src");
-        resolve();
-      };
+    const fallbacks = getFallbackSrc(src) || [];
+    const sources = [src, ...fallbacks];
 
-      const onError = () => {
-        img.removeEventListener("load", onLoad);
-        const fallbacks = getFallbackSrc(src);
-        if (!fallbacks || fallbacks.length === 0) {
-          resolve();
-          return;
-        }
+    const trySource = (source) =>
+      new Promise((resolve) => {
+        const onLoad = async () => {
+          cleanup();
+          await decodeImage(img);
+          resolve(true);
+        };
 
-        const tryNext = () => {
-          const nextSrc = fallbacks.shift();
-          if (!nextSrc) {
-            resolve();
-            return;
-          }
+        const onError = () => {
+          cleanup();
+          resolve(false);
+        };
 
-          img.src = nextSrc;
+        const cleanup = () => {
+          img.removeEventListener("load", onLoad);
+          img.removeEventListener("error", onError);
         };
 
         img.addEventListener("load", onLoad, { once: true });
-        img.addEventListener("error", () => {
-          img.removeEventListener("load", onLoad);
-          tryNext();
-        }, { once: true });
+        img.addEventListener("error", onError, { once: true });
+        img.src = source;
+      });
 
-        tryNext();
-      };
-
+    const loadWithFallbacks = async () => {
       if (img.complete && img.naturalWidth !== 0) {
-        img.removeAttribute("data-src");
-        resolve();
-        return;
+        await decodeImage(img);
+        return true;
       }
 
-      img.addEventListener("load", onLoad, { once: true });
-      img.addEventListener("error", onError, { once: true });
-    });
+      for (const source of sources) {
+        const loaded = await trySource(source);
+        if (loaded) {
+          return true;
+        }
+      }
+
+      return false;
+    };
+
+    return loadWithFallbacks();
   };
 
   const pageLoaded =
