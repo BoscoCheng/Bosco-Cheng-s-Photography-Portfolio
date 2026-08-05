@@ -97,13 +97,18 @@ if (isPortfolioPage) {
 
     const updateLoaderProgress = (loaded, total) => {
       const progress = total === 0 ? 100 : Math.round((loaded / total) * 100);
+      const progressValue = `${progress}%`;
+
+      if (pageLoader) {
+        pageLoader.style.setProperty("--load-progress", progressValue);
+      }
 
       if (loaderProgressBar) {
-        loaderProgressBar.style.width = `${progress}%`;
+        loaderProgressBar.style.width = progressValue;
       }
 
       if (loaderProgressText) {
-        loaderProgressText.textContent = `${progress}%`;
+        loaderProgressText.textContent = progressValue;
       }
     };
 
