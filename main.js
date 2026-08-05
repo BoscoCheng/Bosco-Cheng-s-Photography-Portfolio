@@ -194,90 +194,80 @@ const quickLinkButtons = document.querySelectorAll(".quick-links-toggle");
 const quickLinksPanel = document.querySelector(".quick-links-panel");
 const quickLinksWrapper = document.querySelector(".quick-links-wrapper");
 
-if (quickLinkButtons.length && quickLinksWrapper) {
-  const isMobileQuickLinks = window.matchMedia("(max-width: 768px)").matches;
+const scrollToSection = (selector) => {
+  if (!selector) {
+    return;
+  }
 
-  const smoothScrollToHash = (href) => {
-    if (!href || !href.startsWith("#")) {
+  const target = document.querySelector(selector);
+  if (!target) {
+    return;
+  }
+
+  const navOffset = 92;
+  const top = target.getBoundingClientRect().top + window.scrollY - navOffset;
+  window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+};
+
+if (isPortfolioPage && quickLinksWrapper) {
+  const topSectionButtons = document.querySelectorAll(".portfolio-links [data-target]");
+  const panelSectionButtons = quickLinksPanel
+    ? quickLinksPanel.querySelectorAll("[data-target]")
+    : [];
+
+  const setPanelState = (open) => {
+    if (!quickLinksPanel) {
       return;
     }
 
-    const target = document.querySelector(href);
-    if (!target) {
-      return;
-    }
-
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
-  // Portfolio subpage: toggle panel + controlled in-page links.
-  if (quickLinksPanel) {
-    const setPanelState = (open) => {
-      quickLinksPanel.classList.toggle("open", open);
-      quickLinksPanel.setAttribute("aria-hidden", String(!open));
-
-      quickLinkButtons.forEach((button) => {
-        button.classList.toggle("open", open);
-        button.setAttribute("aria-expanded", String(open));
-      });
-    };
+    quickLinksPanel.classList.toggle("open", open);
+    quickLinksPanel.setAttribute("aria-hidden", String(!open));
 
     quickLinkButtons.forEach((button) => {
-      button.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        setPanelState(!quickLinksPanel.classList.contains("open"));
-      });
+      button.classList.toggle("open", open);
+      button.setAttribute("aria-expanded", String(open));
     });
+  };
 
-    if (isMobileQuickLinks) {
-      const panelLinks = quickLinksPanel.querySelectorAll("a");
-      panelLinks.forEach((link) => {
-        link.addEventListener("click", () => {
-          setPanelState(false);
-        });
-      });
-    } else {
-      quickLinksPanel.addEventListener("click", (event) => {
-        event.stopPropagation();
+  topSectionButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      scrollToSection(button.dataset.target);
+    });
+  });
 
-        if (!(event.target instanceof Element)) {
-          return;
-        }
+  panelSectionButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      scrollToSection(button.dataset.target);
+      setPanelState(false);
+    });
+  });
 
-        const link = event.target.closest("a");
-        if (!link) {
-          return;
-        }
+  quickLinkButtons.forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
 
-        event.preventDefault();
-        smoothScrollToHash(link.getAttribute("href"));
-        setPanelState(false);
-      });
-    }
-
-    document.addEventListener("click", (event) => {
-      if (!(event.target instanceof Node)) {
+      if (!quickLinksPanel) {
         return;
       }
 
-      const clickedInsideQuickLinks = quickLinksWrapper.contains(event.target);
-      if (!clickedInsideQuickLinks && quickLinksPanel.classList.contains("open")) {
-        setPanelState(false);
-      }
+      setPanelState(!quickLinksPanel.classList.contains("open"));
     });
-  } else {
-    // Homepage quick links: simple smooth-scroll anchors.
-    if (!isMobileQuickLinks) {
-      quickLinkButtons.forEach((button) => {
-        button.addEventListener("click", (event) => {
-          const href = button.getAttribute("href");
-          if (href && href.startsWith("#")) {
-            event.preventDefault();
-            smoothScrollToHash(href);
-          }
-        });
-      });
-    }
+  });
+
+  if (quickLinksPanel) {
+    quickLinksPanel.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
   }
+
+  document.addEventListener("click", (event) => {
+    if (!(event.target instanceof Node)) {
+      return;
+    }
+
+    if (!quickLinksWrapper.contains(event.target)) {
+      setPanelState(false);
+    }
+  });
 }

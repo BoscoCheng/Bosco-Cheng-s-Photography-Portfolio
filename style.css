@@ -212,7 +212,8 @@ nav .nav__links a:visited {
   backdrop-filter: blur(12px);
 }
 
-.portfolio-links a {
+.portfolio-links a,
+.portfolio-links .portfolio-link-btn {
   padding: 0.85rem 1.35rem;
   border-radius: 999px;
   color: #111111;
@@ -223,7 +224,13 @@ nav .nav__links a:visited {
   transition: transform 0.25s ease, background 0.25s ease, color 0.25s ease;
 }
 
-.portfolio-links a:hover {
+.portfolio-links .portfolio-link-btn {
+  cursor: pointer;
+  font: inherit;
+}
+
+.portfolio-links a:hover,
+.portfolio-links .portfolio-link-btn:hover {
   background: #000000;
   color: #ffffff;
   transform: translateY(-1px);
@@ -247,7 +254,8 @@ header#Portfolio {
   margin: 0 auto;
 }
 
-.portfolio-links a:focus-visible {
+.portfolio-links a:focus-visible,
+.portfolio-links .portfolio-link-btn:focus-visible {
   outline: 2px solid #000000;
   outline-offset: 3px;
 }
@@ -348,7 +356,8 @@ header#Portfolio {
   display: flex;
 }
 
-.quick-links-panel a {
+.quick-links-panel a,
+.quick-links-panel .quick-links-item {
   display: block;
   padding: 0.85rem 1rem;
   border-radius: 999px;
@@ -359,7 +368,15 @@ header#Portfolio {
   transition: background 0.2s ease, color 0.2s ease;
 }
 
-.quick-links-panel a:hover {
+.quick-links-panel .quick-links-item {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.quick-links-panel a:hover,
+.quick-links-panel .quick-links-item:hover {
   background: #111111;
   color: #ffffff;
 }
