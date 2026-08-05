@@ -73,11 +73,47 @@ ScrollReveal().reveal(".contact__image img", {
 });
 
 const portfolioImages = document.querySelectorAll(".portfolio__grid img, .about__image img, .header__image img, .contact__image img");
+const isPortfolioPage = document.body.classList.contains("portfolio-page");
 
 portfolioImages.forEach((img) => {
   img.addEventListener("contextmenu", (e) => e.preventDefault());
   img.addEventListener("dragstart", (e) => e.preventDefault());
+  img.decoding = "async";
+  img.loading = "eager";
 });
+
+if (isPortfolioPage) {
+  const pageLoader = document.getElementById("page-loader");
+  const portfolioImageElements = Array.from(document.querySelectorAll(".portfolio__grid img, .about__image img, .header__image img, .contact__image img"));
+  const uniqueSrcs = Array.from(new Set(portfolioImageElements.map((img) => img.src).filter(Boolean)));
+
+  const preloadImage = (src) =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.decoding = "async";
+      img.loading = "eager";
+
+      const done = () => {
+        img.onload = null;
+        img.onerror = null;
+        resolve();
+      };
+
+      img.onload = done;
+      img.onerror = done;
+      img.src = src;
+    });
+
+  const loadAllImages = Promise.all(uniqueSrcs.map(preloadImage));
+  const timeout = new Promise((resolve) => setTimeout(resolve, 12000));
+
+  Promise.race([loadAllImages, timeout]).then(() => {
+    if (pageLoader) {
+      pageLoader.classList.add("page-loader--hidden");
+      pageLoader.setAttribute("aria-hidden", "true");
+    }
+  });
+}
 
 const quickLinkButtons = document.querySelectorAll(".quick-links-toggle");
 const quickLinksPanel = document.querySelector(".quick-links-panel");
