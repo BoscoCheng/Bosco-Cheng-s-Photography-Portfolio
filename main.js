@@ -75,13 +75,14 @@ ScrollReveal().reveal(".contact__image img", {
 const quickLinksToggle = document.querySelector(".quick-links-toggle");
 const quickLinksPanel = document.querySelector(".quick-links-panel");
 
+const isPortfolioPage = document.body.classList.contains("portfolio-page");
 const portfolioImages = document.querySelectorAll(".portfolio__grid img, .about__image img, .header__image img, .contact__image img");
 
 portfolioImages.forEach((img) => {
   img.addEventListener("contextmenu", (e) => e.preventDefault());
   img.addEventListener("dragstart", (e) => e.preventDefault());
 
-  if (!img.closest("nav") && img.closest(".portfolio__grid")) {
+  if (isPortfolioPage && img.closest(".portfolio__grid")) {
     img.loading = "lazy";
     img.decoding = "async";
   }
