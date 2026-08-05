@@ -87,30 +87,72 @@ if (isPortfolioPage) {
   const pageLoader = document.getElementById("page-loader");
   const galleryImages = Array.from(document.querySelectorAll(".portfolio__grid img"));
 
-  const preloadPromises = galleryImages.map((img) => {
+  const getFallbackSrc = (src) => {
+    if (!src || !src.toLowerCase().endsWith(".webp")) {
+      return null;
+    }
+
+    const alternatives = ["Jpg", "jpg", "JPG", "jpeg", "JPEG", "jpg"];
+    return alternatives
+      .map((dir) => src.replace(/\/WebP\//, `/${dir}/`).replace(/\.webp$/i, ".jpg"))
+      .concat(
+        alternatives.map((dir) => src.replace(/\/WebP\//, `/${dir}/`).replace(/\.webp$/i, ".jpeg"))
+      );
+  };
+
+  const loadImage = (img) => {
     const src = img.dataset.src;
     if (!src) {
       return Promise.resolve();
     }
 
-    const preloader = new Image();
-    preloader.src = src;
-    preloader.loading = "eager";
-    preloader.decoding = "sync";
+    img.loading = "eager";
+    img.decoding = "sync";
+    img.src = src;
 
     return new Promise((resolve) => {
-      const finish = () => {
-        if (typeof preloader.decode === "function") {
-          preloader.decode().catch(() => {}).then(resolve);
-        } else {
-          resolve();
-        }
+      const onLoad = () => {
+        img.removeAttribute("data-src");
+        resolve();
       };
 
-      preloader.addEventListener("load", finish, { once: true });
-      preloader.addEventListener("error", resolve, { once: true });
+      const onError = () => {
+        img.removeEventListener("load", onLoad);
+        const fallbacks = getFallbackSrc(src);
+        if (!fallbacks || fallbacks.length === 0) {
+          resolve();
+          return;
+        }
+
+        const tryNext = () => {
+          const nextSrc = fallbacks.shift();
+          if (!nextSrc) {
+            resolve();
+            return;
+          }
+
+          img.src = nextSrc;
+        };
+
+        img.addEventListener("load", onLoad, { once: true });
+        img.addEventListener("error", () => {
+          img.removeEventListener("load", onLoad);
+          tryNext();
+        }, { once: true });
+
+        tryNext();
+      };
+
+      if (img.complete && img.naturalWidth !== 0) {
+        img.removeAttribute("data-src");
+        resolve();
+        return;
+      }
+
+      img.addEventListener("load", onLoad, { once: true });
+      img.addEventListener("error", onError, { once: true });
     });
-  });
+  };
 
   const pageLoaded =
     document.readyState === "complete"
@@ -119,30 +161,13 @@ if (isPortfolioPage) {
           window.addEventListener("load", resolve, { once: true });
         });
 
-  Promise.all([pageLoaded, Promise.all(preloadPromises)]).then(() => {
-    galleryImages.forEach((img) => {
-      const src = img.dataset.src;
-      if (src) {
-        img.src = src;
-        img.removeAttribute("data-src");
-        img.loading = "eager";
-        img.decoding = "sync";
-      }
-    });
+  const loadPromises = galleryImages.map(loadImage);
 
-    const domDecodePromises = galleryImages.map((img) => {
-      if (typeof img.decode === "function") {
-        return img.decode().catch(() => {});
-      }
-      return Promise.resolve();
-    });
-
-    Promise.all(domDecodePromises).then(() => {
-      if (pageLoader) {
-        pageLoader.classList.add("page-loader--hidden");
-        pageLoader.setAttribute("aria-hidden", "true");
-      }
-    });
+  Promise.all([pageLoaded, Promise.all(loadPromises)]).then(() => {
+    if (pageLoader) {
+      pageLoader.classList.add("page-loader--hidden");
+      pageLoader.setAttribute("aria-hidden", "true");
+    }
   });
 }
 
