@@ -192,19 +192,9 @@ if (isPortfolioPage) {
 
 const quickLinkButtons = document.querySelectorAll(".quick-links-toggle");
 const quickLinksPanel = document.querySelector(".quick-links-panel");
+const quickLinksWrapper = document.querySelector(".quick-links-wrapper");
 
-if (quickLinkButtons.length && quickLinksPanel) {
-  const getTargetElement = (event) => {
-    if (event.target instanceof Element) {
-      return event.target;
-    }
-
-    if (event.target && event.target.parentElement) {
-      return event.target.parentElement;
-    }
-
-    return null;
-  };
+if (quickLinkButtons.length && quickLinksPanel && quickLinksWrapper) {
 
   const setPanelState = (open) => {
     quickLinksPanel.classList.toggle("open", open);
@@ -219,17 +209,19 @@ if (quickLinkButtons.length && quickLinksPanel) {
   quickLinkButtons.forEach((button) => {
     button.addEventListener("click", (event) => {
       event.preventDefault();
+      event.stopPropagation();
       setPanelState(!quickLinksPanel.classList.contains("open"));
     });
   });
 
   quickLinksPanel.addEventListener("click", (event) => {
-    const targetElement = getTargetElement(event);
-    if (!targetElement) {
+    event.stopPropagation();
+
+    if (!(event.target instanceof Element)) {
       return;
     }
 
-    const link = targetElement.closest("a");
+    const link = event.target.closest("a");
     if (!link) {
       return;
     }
@@ -251,10 +243,11 @@ if (quickLinkButtons.length && quickLinksPanel) {
   });
 
   document.addEventListener("click", (event) => {
-    const targetElement = getTargetElement(event);
-    const clickedInsideQuickLinks = targetElement
-      ? targetElement.closest(".quick-links-wrapper")
-      : null;
+    if (!(event.target instanceof Node)) {
+      return;
+    }
+
+    const clickedInsideQuickLinks = quickLinksWrapper.contains(event.target);
 
     if (!clickedInsideQuickLinks && quickLinksPanel.classList.contains("open")) {
       setPanelState(false);
