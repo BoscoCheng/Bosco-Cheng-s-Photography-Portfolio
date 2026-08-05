@@ -171,11 +171,29 @@ if (isPortfolioPage) {
   });
 }
 
-if (quickLinksToggle && quickLinksPanel) {
-  quickLinksToggle.addEventListener("click", () => {
-    const isOpen = quickLinksPanel.classList.toggle("open");
-    quickLinksToggle.classList.toggle("open", isOpen);
-    quickLinksToggle.setAttribute("aria-expanded", String(isOpen));
-    quickLinksPanel.setAttribute("aria-hidden", String(!isOpen));
+const quickLinkButtons = document.querySelectorAll(".quick-links-toggle");
+const quickLinksPanel = document.querySelector(".quick-links-panel");
+
+if (quickLinkButtons.length && quickLinksPanel) {
+  const setPanelState = (open) => {
+    quickLinksPanel.classList.toggle("open", open);
+    quickLinksPanel.setAttribute("aria-hidden", String(!open));
+
+    quickLinkButtons.forEach((button) => {
+      button.classList.toggle("open", open);
+      button.setAttribute("aria-expanded", String(open));
+    });
+  };
+
+  quickLinkButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      setPanelState(!quickLinksPanel.classList.contains("open"));
+    });
+  });
+
+  quickLinksPanel.addEventListener("click", (event) => {
+    if (event.target.closest("a")) {
+      setPanelState(false);
+    }
   });
 }
