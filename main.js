@@ -80,39 +80,57 @@ portfolioImages.forEach((img) => {
   img.addEventListener("dragstart", (e) => e.preventDefault());
   img.decoding = "async";
   img.loading = "eager";
+  img.importance = "high";
 });
 
 if (isPortfolioPage) {
   const pageLoader = document.getElementById("page-loader");
-  const portfolioImageElements = Array.from(document.querySelectorAll(".portfolio__grid img, .about__image img, .header__image img, .contact__image img"));
-  const uniqueSrcs = Array.from(new Set(portfolioImageElements.map((img) => img.src).filter(Boolean)));
+  const portfolioImageElements = Array.from(document.querySelectorAll(
+    ".portfolio__grid img, .about__image img, .header__image img, .contact__image img"
+  ));
 
-  const preloadImage = (src) =>
+  const decodeImage = (img) =>
+    img.decode ? img.decode().catch(() => undefined) : Promise.resolve();
+
+  const waitForDomImage = (img) =>
     new Promise((resolve) => {
-      const img = new Image();
-      img.decoding = "async";
-      img.loading = "eager";
+      if (img.complete && img.naturalWidth !== 0) {
+        decodeImage(img).then(resolve);
+        return;
+      }
 
       const done = () => {
-        img.onload = null;
-        img.onerror = null;
-        resolve();
+        img.removeEventListener("load", done);
+        img.removeEventListener("error", done);
+        decodeImage(img).then(resolve).catch(resolve);
       };
 
-      img.onload = done;
-      img.onerror = done;
-      img.src = src;
+      img.addEventListener("load", done, { once: true });
+      img.addEventListener("error", done, { once: true });
     });
 
-  const loadAllImages = Promise.allSettled(uniqueSrcs.map(preloadImage));
-  const maxWait = new Promise((resolve) => setTimeout(resolve, 8000));
+  const pageLoaded =
+    document.readyState === "complete"
+      ? Promise.resolve()
+      : new Promise((resolve) => window.addEventListener("load", resolve, { once: true }));
 
-  Promise.race([loadAllImages, maxWait]).then(() => {
+  const allImagesLoaded = Promise.allSettled(portfolioImageElements.map(waitForDomImage));
+  const hideAfterReady = Promise.all([pageLoaded, allImagesLoaded]);
+  const isMobile = window.matchMedia("(max-width: 768px)").matches;
+  const maxWait = new Promise((resolve) => setTimeout(resolve, isMobile ? 8000 : 30000));
+
+  const hideLoader = () => {
     if (pageLoader) {
       pageLoader.classList.add("page-loader--hidden");
       pageLoader.setAttribute("aria-hidden", "true");
     }
-  });
+  };
+
+  if (isMobile) {
+    Promise.race([hideAfterReady, maxWait]).then(hideLoader);
+  } else {
+    hideAfterReady.then(hideLoader);
+  }
 }
 
 const quickLinkButtons = document.querySelectorAll(".quick-links-toggle");
