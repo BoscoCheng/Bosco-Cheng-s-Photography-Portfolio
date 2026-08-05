@@ -166,6 +166,18 @@ const quickLinkButtons = document.querySelectorAll(".quick-links-toggle");
 const quickLinksPanel = document.querySelector(".quick-links-panel");
 
 if (quickLinkButtons.length && quickLinksPanel) {
+  const getTargetElement = (event) => {
+    if (event.target instanceof Element) {
+      return event.target;
+    }
+
+    if (event.target && event.target.parentElement) {
+      return event.target.parentElement;
+    }
+
+    return null;
+  };
+
   const setPanelState = (open) => {
     quickLinksPanel.classList.toggle("open", open);
     quickLinksPanel.setAttribute("aria-hidden", String(!open));
@@ -184,7 +196,12 @@ if (quickLinkButtons.length && quickLinksPanel) {
   });
 
   quickLinksPanel.addEventListener("click", (event) => {
-    const link = event.target.closest("a");
+    const targetElement = getTargetElement(event);
+    if (!targetElement) {
+      return;
+    }
+
+    const link = targetElement.closest("a");
     if (!link) {
       return;
     }
@@ -206,7 +223,11 @@ if (quickLinkButtons.length && quickLinksPanel) {
   });
 
   document.addEventListener("click", (event) => {
-    const clickedInsideQuickLinks = event.target.closest(".quick-links-wrapper");
+    const targetElement = getTargetElement(event);
+    const clickedInsideQuickLinks = targetElement
+      ? targetElement.closest(".quick-links-wrapper")
+      : null;
+
     if (!clickedInsideQuickLinks && quickLinksPanel.classList.contains("open")) {
       setPanelState(false);
     }
