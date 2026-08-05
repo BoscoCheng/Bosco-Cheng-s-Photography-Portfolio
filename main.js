@@ -101,8 +101,17 @@ if (isPortfolioPage) {
 
   updateLoaderProgress(0, totalImages);
 
-  const decodeImage = (img) =>
-    img.decode ? img.decode().catch(() => undefined) : Promise.resolve();
+  const decodeImage = (img) => {
+    if (!img.decode) {
+      return Promise.resolve();
+    }
+
+    const decodeTimeout = new Promise((resolve) => {
+      window.setTimeout(resolve, 3000);
+    });
+
+    return Promise.race([img.decode(), decodeTimeout]).catch(() => undefined);
+  };
 
   const waitForDomImage = (img) =>
     new Promise((resolve) => {
@@ -137,13 +146,23 @@ if (isPortfolioPage) {
     waitForDomImage(img).finally(() => {
       loadedImages += 1;
       updateLoaderProgress(loadedImages, totalImages);
+
+      if (loadedImages === totalImages && document.readyState === "complete") {
+        hideLoader();
+      }
     })
   );
 
   const allImagesLoaded = Promise.allSettled(trackedImagePromises);
   const hideAfterReady = Promise.all([pageLoaded, allImagesLoaded]);
+  let loaderHidden = false;
 
   const hideLoader = () => {
+    if (loaderHidden) {
+      return;
+    }
+
+    loaderHidden = true;
     updateLoaderProgress(totalImages, totalImages);
 
     if (pageLoader) {
