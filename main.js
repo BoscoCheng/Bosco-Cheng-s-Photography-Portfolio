@@ -79,9 +79,27 @@ allImages.forEach((img) => {
 
 if (isPortfolioPage) {
   const pageLoader = document.getElementById("page-loader");
+  const loaderProgressBar = document.getElementById("loader-progress-bar");
+  const loaderProgressText = document.getElementById("loader-progress-text");
   const portfolioImageElements = Array.from(document.querySelectorAll(
     ".portfolio__grid img, .about__image img, .header__image img, .contact__image img"
   ));
+  const totalImages = portfolioImageElements.length;
+  let loadedImages = 0;
+
+  const updateLoaderProgress = (loaded, total) => {
+    const progress = total === 0 ? 100 : Math.round((loaded / total) * 100);
+
+    if (loaderProgressBar) {
+      loaderProgressBar.style.width = `${progress}%`;
+    }
+
+    if (loaderProgressText) {
+      loaderProgressText.textContent = `${progress}%`;
+    }
+  };
+
+  updateLoaderProgress(0, totalImages);
 
   const decodeImage = (img) =>
     img.decode ? img.decode().catch(() => undefined) : Promise.resolve();
@@ -108,25 +126,33 @@ if (isPortfolioPage) {
       ? Promise.resolve()
       : new Promise((resolve) => window.addEventListener("load", resolve, { once: true }));
 
-  const allImagesLoaded = Promise.allSettled(portfolioImageElements.map(waitForDomImage));
+  const trackedImagePromises = portfolioImageElements.map((img) =>
+    waitForDomImage(img).finally(() => {
+      loadedImages += 1;
+      updateLoaderProgress(loadedImages, totalImages);
+    })
+  );
+
+  const allImagesLoaded = Promise.allSettled(trackedImagePromises);
   const hideAfterReady = Promise.all([pageLoaded, allImagesLoaded]);
-  const isMobile = window.matchMedia("(max-width: 768px)").matches;
-  const maxWait = new Promise((resolve) => setTimeout(resolve, isMobile ? 8000 : 30000));
 
   const hideLoader = () => {
+    updateLoaderProgress(totalImages, totalImages);
+
     if (pageLoader) {
       pageLoader.classList.add("page-loader--hidden");
       pageLoader.setAttribute("aria-hidden", "true");
     }
+
+    document.body.classList.remove("portfolio-loading");
   };
 
-  window.setTimeout(hideLoader, 10000);
-
-  if (isMobile) {
-    Promise.race([hideAfterReady, maxWait]).then(hideLoader);
-  } else {
-    hideAfterReady.then(hideLoader);
+  if (pageLoader) {
+    document.body.classList.add("portfolio-loading");
+    pageLoader.setAttribute("aria-hidden", "false");
   }
+
+  hideAfterReady.then(hideLoader);
 }
 
 const quickLinkButtons = document.querySelectorAll(".quick-links-toggle");

@@ -90,6 +90,10 @@ body {
   overflow-x: hidden;
 }
 
+.portfolio-page.portfolio-loading {
+  overflow: hidden;
+}
+
 .page-loader {
   position: fixed;
   inset: 0;
@@ -114,6 +118,38 @@ body {
   align-items: center;
   gap: 1rem;
   font-weight: 700;
+}
+
+.loader-progress {
+  width: min(360px, 75vw);
+  height: 0.5rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.loader-progress__bar {
+  width: 0;
+  height: 100%;
+  background: #000000;
+  transition: width 0.2s ease;
+}
+
+.loader-progress__text {
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 768px) {
+  .page-loader__content {
+    width: min(92vw, 420px);
+    text-align: center;
+    padding-inline: 0.5rem;
+  }
+
+  .loader-progress {
+    width: 100%;
+  }
 }
 
 .spinner {
