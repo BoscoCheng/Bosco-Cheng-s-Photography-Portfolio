@@ -194,63 +194,90 @@ const quickLinkButtons = document.querySelectorAll(".quick-links-toggle");
 const quickLinksPanel = document.querySelector(".quick-links-panel");
 const quickLinksWrapper = document.querySelector(".quick-links-wrapper");
 
-if (quickLinkButtons.length && quickLinksPanel && quickLinksWrapper) {
+if (quickLinkButtons.length && quickLinksWrapper) {
+  const isMobileQuickLinks = window.matchMedia("(max-width: 768px)").matches;
 
-  const setPanelState = (open) => {
-    quickLinksPanel.classList.toggle("open", open);
-    quickLinksPanel.setAttribute("aria-hidden", String(!open));
+  const smoothScrollToHash = (href) => {
+    if (!href || !href.startsWith("#")) {
+      return;
+    }
 
-    quickLinkButtons.forEach((button) => {
-      button.classList.toggle("open", open);
-      button.setAttribute("aria-expanded", String(open));
-    });
+    const target = document.querySelector(href);
+    if (!target) {
+      return;
+    }
+
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  quickLinkButtons.forEach((button) => {
-    button.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      setPanelState(!quickLinksPanel.classList.contains("open"));
+  // Portfolio subpage: toggle panel + controlled in-page links.
+  if (quickLinksPanel) {
+    const setPanelState = (open) => {
+      quickLinksPanel.classList.toggle("open", open);
+      quickLinksPanel.setAttribute("aria-hidden", String(!open));
+
+      quickLinkButtons.forEach((button) => {
+        button.classList.toggle("open", open);
+        button.setAttribute("aria-expanded", String(open));
+      });
+    };
+
+    quickLinkButtons.forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setPanelState(!quickLinksPanel.classList.contains("open"));
+      });
     });
-  });
 
-  quickLinksPanel.addEventListener("click", (event) => {
-    event.stopPropagation();
+    if (isMobileQuickLinks) {
+      const panelLinks = quickLinksPanel.querySelectorAll("a");
+      panelLinks.forEach((link) => {
+        link.addEventListener("click", () => {
+          setPanelState(false);
+        });
+      });
+    } else {
+      quickLinksPanel.addEventListener("click", (event) => {
+        event.stopPropagation();
 
-    if (!(event.target instanceof Element)) {
-      return;
-    }
-
-    const link = event.target.closest("a");
-    if (!link) {
-      return;
-    }
-
-    event.preventDefault();
-
-    const href = link.getAttribute("href");
-    if (href && href.startsWith("#")) {
-      const target = document.querySelector(href);
-      if (target) {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-        if (window.history && window.history.replaceState) {
-          window.history.replaceState(null, "", href);
+        if (!(event.target instanceof Element)) {
+          return;
         }
+
+        const link = event.target.closest("a");
+        if (!link) {
+          return;
+        }
+
+        event.preventDefault();
+        smoothScrollToHash(link.getAttribute("href"));
+        setPanelState(false);
+      });
+    }
+
+    document.addEventListener("click", (event) => {
+      if (!(event.target instanceof Node)) {
+        return;
       }
+
+      const clickedInsideQuickLinks = quickLinksWrapper.contains(event.target);
+      if (!clickedInsideQuickLinks && quickLinksPanel.classList.contains("open")) {
+        setPanelState(false);
+      }
+    });
+  } else {
+    // Homepage quick links: simple smooth-scroll anchors.
+    if (!isMobileQuickLinks) {
+      quickLinkButtons.forEach((button) => {
+        button.addEventListener("click", (event) => {
+          const href = button.getAttribute("href");
+          if (href && href.startsWith("#")) {
+            event.preventDefault();
+            smoothScrollToHash(href);
+          }
+        });
+      });
     }
-
-    setPanelState(false);
-  });
-
-  document.addEventListener("click", (event) => {
-    if (!(event.target instanceof Node)) {
-      return;
-    }
-
-    const clickedInsideQuickLinks = quickLinksWrapper.contains(event.target);
-
-    if (!clickedInsideQuickLinks && quickLinksPanel.classList.contains("open")) {
-      setPanelState(false);
-    }
-  });
+  }
 }
