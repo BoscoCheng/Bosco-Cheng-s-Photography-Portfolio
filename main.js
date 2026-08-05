@@ -126,6 +126,8 @@ if (isPortfolioPage) {
     }
   };
 
+  window.setTimeout(hideLoader, 10000);
+
   if (isMobile) {
     Promise.race([hideAfterReady, maxWait]).then(hideLoader);
   } else {
