@@ -398,12 +398,12 @@ header#Portfolio {
 .quick-links-panel .quick-links-item {
   display: block;
   padding: 0.85rem 1rem;
-  border-radius: 999px;
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
   color: #111111;
   font-weight: 600;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
 .quick-links-panel .quick-links-item {
@@ -416,8 +416,7 @@ header#Portfolio {
 
 .quick-links-panel a:hover,
 .quick-links-panel .quick-links-item:hover {
-  background: #111111;
-  color: #ffffff;
+  border-bottom-color: #111111;
 }
 
 
