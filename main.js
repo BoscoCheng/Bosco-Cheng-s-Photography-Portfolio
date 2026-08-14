@@ -95,6 +95,7 @@ if (isPortfolioPage) {
   const pageLoader = document.getElementById("page-loader");
   const loaderProgressBar = document.getElementById("loader-progress-bar");
   const loaderProgressText = document.getElementById("loader-progress-text");
+  const LOADER_MAX_WAIT_MS = 6000;
   const portfolioImageElements = Array.from(document.querySelectorAll(
     ".portfolio__grid img, .about__image img, .header__image img, .contact__image img"
   ));
@@ -175,6 +176,7 @@ if (isPortfolioPage) {
   const allImagesLoaded = Promise.allSettled(trackedImagePromises);
   const hideAfterReady = Promise.all([pageLoaded, allImagesLoaded]);
   let loaderHidden = false;
+  let loaderFailSafeTimeoutId = null;
 
   const hideLoader = () => {
     if (loaderHidden) {
@@ -182,6 +184,10 @@ if (isPortfolioPage) {
     }
 
     loaderHidden = true;
+    if (loaderFailSafeTimeoutId !== null) {
+      window.clearTimeout(loaderFailSafeTimeoutId);
+      loaderFailSafeTimeoutId = null;
+    }
     updateLoaderProgress(totalImages, totalImages);
 
     if (pageLoader) {
@@ -198,6 +204,11 @@ if (isPortfolioPage) {
   if (pageLoader) {
     document.body.classList.add("portfolio-loading");
     pageLoader.setAttribute("aria-hidden", "false");
+
+    // Failsafe for mobile browsers: never let loader block page forever.
+    loaderFailSafeTimeoutId = window.setTimeout(() => {
+      hideLoader();
+    }, LOADER_MAX_WAIT_MS);
   }
 
   hideAfterReady.then(hideLoader);
