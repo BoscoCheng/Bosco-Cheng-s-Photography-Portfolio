@@ -356,6 +356,10 @@ header#Portfolio {
   .mobile-button {
     display: inline-flex;
   }
+
+  .quick-links-panel {
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+  }
 }
 
 .quick-links-toggle:hover {
@@ -382,6 +386,8 @@ header#Portfolio {
   background: rgba(255, 255, 255, 0.98);
   border: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.14);
+  transform: translateZ(0);
+  will-change: transform, opacity;
 }
 
 .quick-links-panel.open {

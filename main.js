@@ -224,6 +224,7 @@ const scrollToSection = (selector) => {
 };
 
 if (isPortfolioPage && quickLinksWrapper) {
+  const quickLinksToggle = quickLinksWrapper.querySelector(".quick-links-toggle");
   const topSectionButtons = document.querySelectorAll(".portfolio-links [data-target]");
   const panelSectionButtons = quickLinksPanel
     ? quickLinksPanel.querySelectorAll("[data-target]")
@@ -253,14 +254,18 @@ if (isPortfolioPage && quickLinksWrapper) {
   panelSectionButtons.forEach((button) => {
     button.addEventListener("click", (event) => {
       event.preventDefault();
-      scrollToSection(button.dataset.target);
+      const target = button.dataset.target;
       setPanelState(false);
+
+      // Delay section jump until panel close is applied to avoid mobile repaint spikes.
+      window.requestAnimationFrame(() => {
+        scrollToSection(target);
+      });
     });
   });
 
-  quickLinkButtons.forEach((button) => {
-    button.addEventListener("click", (event) => {
-      event.preventDefault();
+  if (quickLinksToggle) {
+    quickLinksToggle.addEventListener("click", (event) => {
       event.stopPropagation();
 
       if (!quickLinksPanel) {
@@ -269,7 +274,7 @@ if (isPortfolioPage && quickLinksWrapper) {
 
       setPanelState(!quickLinksPanel.classList.contains("open"));
     });
-  });
+  }
 
   if (quickLinksPanel) {
     quickLinksPanel.addEventListener("click", (event) => {
@@ -277,7 +282,7 @@ if (isPortfolioPage && quickLinksWrapper) {
     });
   }
 
-  document.addEventListener("click", (event) => {
+  const closePanelIfOutside = (event) => {
     if (!(event.target instanceof Node)) {
       return;
     }
@@ -285,5 +290,8 @@ if (isPortfolioPage && quickLinksWrapper) {
     if (!quickLinksWrapper.contains(event.target)) {
       setPanelState(false);
     }
-  });
+  };
+
+  document.addEventListener("click", closePanelIfOutside);
+  document.addEventListener("touchstart", closePanelIfOutside, { passive: true });
 }
