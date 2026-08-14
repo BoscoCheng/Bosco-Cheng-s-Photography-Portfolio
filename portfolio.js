@@ -168,8 +168,91 @@ const quickLinksWrapper = document.querySelector(".quick-links-wrapper");
 const quickLinksPanel = document.querySelector(".quick-links-panel");
 const quickLinksToggle = quickLinksWrapper ? quickLinksWrapper.querySelector(".quick-links-toggle") : null;
 const quickLinkButtons = document.querySelectorAll(".quick-links-toggle");
+const portfolioSectionOrder = [
+  "#Portfolio",
+  "#Street",
+  "#Landscape",
+  "#Food",
+  "#Portraits",
+  "#Events",
+  "#Products",
+  "#Architecture",
+];
+let stabilizeTimeoutId = null;
+let stabilizeAnimationFrameId = null;
+let activeStabilizeTarget = null;
 
-const scrollToSection = (selector) => {
+const clearStabilizers = () => {
+  if (stabilizeTimeoutId !== null) {
+    window.clearTimeout(stabilizeTimeoutId);
+    stabilizeTimeoutId = null;
+  }
+
+  if (stabilizeAnimationFrameId !== null) {
+    window.cancelAnimationFrame(stabilizeAnimationFrameId);
+    stabilizeAnimationFrameId = null;
+  }
+};
+
+const primeImagesBeforeTarget = (targetSelector) => {
+  if (!isSmallViewport) {
+    return;
+  }
+
+  const targetIndex = portfolioSectionOrder.indexOf(targetSelector);
+  if (targetIndex <= 0) {
+    return;
+  }
+
+  const selectors = portfolioSectionOrder
+    .slice(1, targetIndex + 1)
+    .map((sectionSelector) => `${sectionSelector} img`)
+    .join(",");
+
+  if (!selectors) {
+    return;
+  }
+
+  document.querySelectorAll(selectors).forEach((img) => {
+    img.loading = "eager";
+    img.importance = "high";
+    img.setAttribute("fetchpriority", "high");
+  });
+};
+
+const stabilizeSectionPosition = (targetSelector) => {
+  if (!isSmallViewport) {
+    return;
+  }
+
+  clearStabilizers();
+  activeStabilizeTarget = targetSelector;
+  const startTime = performance.now();
+  const stabilizeDurationMs = 1400;
+
+  const tick = () => {
+    if (activeStabilizeTarget !== targetSelector) {
+      return;
+    }
+
+    scrollToSection(targetSelector, { forceInstant: true });
+
+    if (performance.now() - startTime >= stabilizeDurationMs) {
+      clearStabilizers();
+      return;
+    }
+
+    stabilizeTimeoutId = window.setTimeout(() => {
+      stabilizeAnimationFrameId = window.requestAnimationFrame(tick);
+    }, 120);
+  };
+
+  stabilizeAnimationFrameId = window.requestAnimationFrame(tick);
+};
+
+const scrollToSection = (selector, options = {}) => {
+  const { forceInstant = false } = options;
+
   if (!selector) {
     return;
   }
@@ -182,7 +265,7 @@ const scrollToSection = (selector) => {
   const navOffset = 92;
   const top = target.getBoundingClientRect().top + window.scrollY - navOffset;
   const shouldAnimate = !window.matchMedia("(max-width: 768px), (prefers-reduced-motion: reduce)").matches;
-  window.scrollTo({ top: Math.max(0, top), behavior: shouldAnimate ? "smooth" : "auto" });
+  window.scrollTo({ top: Math.max(0, top), behavior: forceInstant ? "auto" : shouldAnimate ? "smooth" : "auto" });
 };
 
 if (quickLinksWrapper && quickLinksPanel && quickLinksToggle) {
@@ -218,6 +301,8 @@ if (quickLinksWrapper && quickLinksPanel && quickLinksToggle) {
     }
 
     lastQuickNavTime = now;
+    activeStabilizeTarget = targetSelector;
+    primeImagesBeforeTarget(targetSelector);
 
     if (closePanelFirst) {
       setPanelState(false);
@@ -231,6 +316,7 @@ if (quickLinksWrapper && quickLinksPanel && quickLinksToggle) {
     pendingScrollFrameId = window.requestAnimationFrame(() => {
       pendingScrollFrameId = null;
       scrollToSection(targetSelector);
+      stabilizeSectionPosition(targetSelector);
     });
   };
 
@@ -263,6 +349,8 @@ if (quickLinksWrapper && quickLinksPanel && quickLinksToggle) {
     }
 
     if (!quickLinksWrapper.contains(event.target)) {
+      activeStabilizeTarget = null;
+      clearStabilizers();
       setPanelState(false);
     }
   });
