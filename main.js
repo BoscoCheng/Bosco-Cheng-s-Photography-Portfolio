@@ -235,6 +235,11 @@ if (isPortfolioPage && quickLinksWrapper) {
       return;
     }
 
+    const isOpen = quickLinksPanel.classList.contains("open");
+    if (isOpen === open) {
+      return;
+    }
+
     quickLinksPanel.classList.toggle("open", open);
     quickLinksPanel.setAttribute("aria-hidden", String(!open));
 
@@ -293,5 +298,4 @@ if (isPortfolioPage && quickLinksWrapper) {
   };
 
   document.addEventListener("click", closePanelIfOutside);
-  document.addEventListener("touchstart", closePanelIfOutside, { passive: true });
 }
