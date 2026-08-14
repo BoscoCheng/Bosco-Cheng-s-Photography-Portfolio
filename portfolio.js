@@ -18,16 +18,20 @@ if (menuBtn && navLinks && menuBtnIcon) {
 
 const allImages = document.querySelectorAll("img");
 const isSmallViewport = window.matchMedia("(max-width: 768px)").matches;
+const PRELOAD_IMAGE_LIMIT = isSmallViewport ? 0 : 12;
+const LOADER_MAX_WAIT_MS = 5000;
+const IMAGE_WAIT_TIMEOUT_MS = 7000;
 
 allImages.forEach((img, index) => {
   img.addEventListener("contextmenu", (event) => event.preventDefault());
   img.addEventListener("dragstart", (event) => event.preventDefault());
   img.decoding = "async";
 
-  const shouldPrioritize = index < 6;
-  img.loading = isSmallViewport ? (shouldPrioritize ? "eager" : "lazy") : "eager";
-  img.importance = isSmallViewport ? (shouldPrioritize ? "high" : "auto") : "high";
-  img.setAttribute("fetchpriority", isSmallViewport ? (shouldPrioritize ? "high" : "low") : "high");
+  const prioritizedCount = isSmallViewport ? 6 : PRELOAD_IMAGE_LIMIT;
+  const shouldPrioritize = index < prioritizedCount;
+  img.loading = shouldPrioritize ? "eager" : "lazy";
+  img.importance = shouldPrioritize ? "high" : "auto";
+  img.setAttribute("fetchpriority", shouldPrioritize ? "high" : "low");
 });
 
 const pageLoader = document.getElementById("page-loader");
@@ -71,35 +75,73 @@ if (pageLoader) {
     document.body.classList.add("portfolio-loading");
     pageLoader.setAttribute("aria-hidden", "false");
 
-    const trackedImages = Array.from(document.querySelectorAll(".portfolio__grid img"));
+    const trackedImages = Array.from(document.querySelectorAll(".portfolio__grid img")).slice(0, PRELOAD_IMAGE_LIMIT);
     const totalImages = trackedImages.length;
     let loadedImages = 0;
+    let forceRevealTimeoutId = null;
+    let loaderSettled = false;
 
     setLoaderProgress(0, totalImages);
 
+    const finishLoader = () => {
+      if (loaderSettled) {
+        return;
+      }
+
+      loaderSettled = true;
+
+      if (forceRevealTimeoutId !== null) {
+        window.clearTimeout(forceRevealTimeoutId);
+        forceRevealTimeoutId = null;
+      }
+
+      hideLoader();
+    };
+
     const markLoaded = () => {
+      if (loaderSettled) {
+        return;
+      }
+
       loadedImages += 1;
       setLoaderProgress(loadedImages, totalImages);
 
       if (loadedImages >= totalImages && document.readyState === "complete") {
-        hideLoader();
+        finishLoader();
       }
     };
 
     if (totalImages === 0) {
       setLoaderProgress(1, 1);
-      hideLoader();
+      finishLoader();
     } else {
       trackedImages.forEach((img) => {
-        if (img.complete) {
+        let settled = false;
+
+        const completeImage = () => {
+          if (settled) {
+            return;
+          }
+
+          settled = true;
           markLoaded();
+        };
+
+        const settleTimeoutId = window.setTimeout(() => {
+          completeImage();
+        }, IMAGE_WAIT_TIMEOUT_MS);
+
+        if (img.complete) {
+          window.clearTimeout(settleTimeoutId);
+          completeImage();
           return;
         }
 
         const done = () => {
+          window.clearTimeout(settleTimeoutId);
           img.removeEventListener("load", done);
           img.removeEventListener("error", done);
-          markLoaded();
+          completeImage();
         };
 
         img.addEventListener("load", done, { once: true });
@@ -107,12 +149,17 @@ if (pageLoader) {
       });
 
       window.addEventListener("load", () => {
-        if (loadedImages >= totalImages) {
-          hideLoader();
+        if (loadedImages >= totalImages || document.readyState === "complete") {
+          finishLoader();
         }
       }, { once: true });
 
-      window.setTimeout(hideLoader, 6000);
+      forceRevealTimeoutId = window.setTimeout(() => {
+        finishLoader();
+      }, LOADER_MAX_WAIT_MS);
+
+      // BFCache restore safety: ensure loader is never left on top.
+      window.addEventListener("pageshow", finishLoader, { once: true });
     }
   }
 }
@@ -141,6 +188,9 @@ const scrollToSection = (selector) => {
 if (quickLinksWrapper && quickLinksPanel && quickLinksToggle) {
   const topSectionButtons = document.querySelectorAll(".portfolio-links [data-target]");
   const panelSectionButtons = quickLinksPanel.querySelectorAll("[data-target]");
+  const QUICK_NAV_GUARD_MS = isSmallViewport ? 260 : 140;
+  let lastQuickNavTime = 0;
+  let pendingScrollFrameId = null;
 
   const setPanelState = (open) => {
     const isOpen = quickLinksPanel.classList.contains("open");
@@ -157,22 +207,44 @@ if (quickLinksWrapper && quickLinksPanel && quickLinksToggle) {
     });
   };
 
+  const runQuickNavigation = (targetSelector, closePanelFirst) => {
+    if (!targetSelector) {
+      return;
+    }
+
+    const now = Date.now();
+    if (now - lastQuickNavTime < QUICK_NAV_GUARD_MS) {
+      return;
+    }
+
+    lastQuickNavTime = now;
+
+    if (closePanelFirst) {
+      setPanelState(false);
+    }
+
+    if (pendingScrollFrameId !== null) {
+      window.cancelAnimationFrame(pendingScrollFrameId);
+      pendingScrollFrameId = null;
+    }
+
+    pendingScrollFrameId = window.requestAnimationFrame(() => {
+      pendingScrollFrameId = null;
+      scrollToSection(targetSelector);
+    });
+  };
+
   topSectionButtons.forEach((button) => {
     button.addEventListener("click", (event) => {
       event.preventDefault();
-      scrollToSection(button.dataset.target);
+      runQuickNavigation(button.dataset.target, false);
     });
   });
 
   panelSectionButtons.forEach((button) => {
     button.addEventListener("click", (event) => {
       event.preventDefault();
-      const target = button.dataset.target;
-      setPanelState(false);
-
-      window.requestAnimationFrame(() => {
-        scrollToSection(target);
-      });
+      runQuickNavigation(button.dataset.target, true);
     });
   });
 
