@@ -258,7 +258,8 @@ const scrollToSection = (selector, options = {}) => {
   }
 
   const navOffset = 92;
-  const top = target.getBoundingClientRect().top + window.scrollY - navOffset;
+  const isTopTarget = selector === "#Portfolio";
+  const top = isTopTarget ? 0 : target.getBoundingClientRect().top + window.scrollY - navOffset;
   const shouldAnimate = !window.matchMedia("(max-width: 768px), (prefers-reduced-motion: reduce)").matches;
   window.scrollTo({ top: Math.max(0, top), behavior: forceInstant ? "auto" : shouldAnimate ? "smooth" : "auto" });
 };
