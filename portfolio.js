@@ -18,7 +18,7 @@ if (menuBtn && navLinks && menuBtnIcon) {
 
 const allImages = document.querySelectorAll("img");
 const isSmallViewport = window.matchMedia("(max-width: 768px)").matches;
-const PRELOAD_IMAGE_LIMIT = isSmallViewport ? 0 : 12;
+const PRELOAD_IMAGE_LIMIT = isSmallViewport ? 6 : 12;
 const LOADER_MAX_WAIT_MS = 5000;
 const IMAGE_WAIT_TIMEOUT_MS = 7000;
 
@@ -67,100 +67,93 @@ const hideLoader = () => {
 };
 
 if (pageLoader) {
-  if (isSmallViewport) {
-    pageLoader.classList.add("page-loader--hidden");
-    pageLoader.setAttribute("aria-hidden", "true");
-    document.body.classList.remove("portfolio-loading");
-  } else {
-    document.body.classList.add("portfolio-loading");
-    pageLoader.setAttribute("aria-hidden", "false");
+  document.body.classList.add("portfolio-loading");
+  pageLoader.setAttribute("aria-hidden", "false");
 
-    const trackedImages = Array.from(document.querySelectorAll(".portfolio__grid img")).slice(0, PRELOAD_IMAGE_LIMIT);
-    const totalImages = trackedImages.length;
-    let loadedImages = 0;
-    let forceRevealTimeoutId = null;
-    let loaderSettled = false;
+  const trackedImages = Array.from(document.querySelectorAll(".portfolio__grid img")).slice(0, PRELOAD_IMAGE_LIMIT);
+  const totalImages = trackedImages.length;
+  let loadedImages = 0;
+  let forceRevealTimeoutId = null;
+  let loaderSettled = false;
 
-    setLoaderProgress(0, totalImages);
+  setLoaderProgress(0, totalImages);
 
-    const finishLoader = () => {
-      if (loaderSettled) {
-        return;
-      }
+  const finishLoader = () => {
+    if (loaderSettled) {
+      return;
+    }
 
-      loaderSettled = true;
+    loaderSettled = true;
 
-      if (forceRevealTimeoutId !== null) {
-        window.clearTimeout(forceRevealTimeoutId);
-        forceRevealTimeoutId = null;
-      }
+    if (forceRevealTimeoutId !== null) {
+      window.clearTimeout(forceRevealTimeoutId);
+      forceRevealTimeoutId = null;
+    }
 
-      hideLoader();
-    };
+    hideLoader();
+  };
 
-    const markLoaded = () => {
-      if (loaderSettled) {
-        return;
-      }
+  const markLoaded = () => {
+    if (loaderSettled) {
+      return;
+    }
 
-      loadedImages += 1;
-      setLoaderProgress(loadedImages, totalImages);
+    loadedImages += 1;
+    setLoaderProgress(loadedImages, totalImages);
 
-      if (loadedImages >= totalImages && document.readyState === "complete") {
-        finishLoader();
-      }
-    };
-
-    if (totalImages === 0) {
-      setLoaderProgress(1, 1);
+    if (loadedImages >= totalImages && document.readyState === "complete") {
       finishLoader();
-    } else {
-      trackedImages.forEach((img) => {
-        let settled = false;
+    }
+  };
 
-        const completeImage = () => {
-          if (settled) {
-            return;
-          }
+  if (totalImages === 0) {
+    setLoaderProgress(1, 1);
+    finishLoader();
+  } else {
+    trackedImages.forEach((img) => {
+      let settled = false;
 
-          settled = true;
-          markLoaded();
-        };
-
-        const settleTimeoutId = window.setTimeout(() => {
-          completeImage();
-        }, IMAGE_WAIT_TIMEOUT_MS);
-
-        if (img.complete) {
-          window.clearTimeout(settleTimeoutId);
-          completeImage();
+      const completeImage = () => {
+        if (settled) {
           return;
         }
 
-        const done = () => {
-          window.clearTimeout(settleTimeoutId);
-          img.removeEventListener("load", done);
-          img.removeEventListener("error", done);
-          completeImage();
-        };
+        settled = true;
+        markLoaded();
+      };
 
-        img.addEventListener("load", done, { once: true });
-        img.addEventListener("error", done, { once: true });
-      });
+      const settleTimeoutId = window.setTimeout(() => {
+        completeImage();
+      }, IMAGE_WAIT_TIMEOUT_MS);
 
-      window.addEventListener("load", () => {
-        if (loadedImages >= totalImages || document.readyState === "complete") {
-          finishLoader();
-        }
-      }, { once: true });
+      if (img.complete) {
+        window.clearTimeout(settleTimeoutId);
+        completeImage();
+        return;
+      }
 
-      forceRevealTimeoutId = window.setTimeout(() => {
+      const done = () => {
+        window.clearTimeout(settleTimeoutId);
+        img.removeEventListener("load", done);
+        img.removeEventListener("error", done);
+        completeImage();
+      };
+
+      img.addEventListener("load", done, { once: true });
+      img.addEventListener("error", done, { once: true });
+    });
+
+    window.addEventListener("load", () => {
+      if (loadedImages >= totalImages || document.readyState === "complete") {
         finishLoader();
-      }, LOADER_MAX_WAIT_MS);
+      }
+    }, { once: true });
 
-      // BFCache restore safety: ensure loader is never left on top.
-      window.addEventListener("pageshow", finishLoader, { once: true });
-    }
+    forceRevealTimeoutId = window.setTimeout(() => {
+      finishLoader();
+    }, LOADER_MAX_WAIT_MS);
+
+    window.addEventListener("pageshow", finishLoader, { once: true });
   }
 }
 
