@@ -96,122 +96,133 @@ if (isPortfolioPage) {
   const loaderProgressBar = document.getElementById("loader-progress-bar");
   const loaderProgressText = document.getElementById("loader-progress-text");
   const LOADER_MAX_WAIT_MS = 6000;
-  const portfolioImageElements = Array.from(document.querySelectorAll(
-    ".portfolio__grid img, .about__image img, .header__image img, .contact__image img"
-  ));
-  const totalImages = portfolioImageElements.length;
-  let loadedImages = 0;
 
-  const updateLoaderProgress = (loaded, total) => {
-    const progress = total === 0 ? 100 : Math.round((loaded / total) * 100);
-    const progressValue = `${progress}%`;
-
+  // Mobile safe mode: skip heavy image-tracking loader logic.
+  if (isSmallViewport) {
     if (pageLoader) {
-      pageLoader.style.setProperty("--load-progress", progressValue);
-    }
-
-    if (loaderProgressBar) {
-      loaderProgressBar.style.width = progressValue;
-    }
-
-    if (loaderProgressText) {
-      loaderProgressText.textContent = progressValue;
-    }
-  };
-
-  updateLoaderProgress(0, totalImages);
-
-  const decodeImage = (img) => {
-    if (!img.decode) {
-      return Promise.resolve();
-    }
-
-    const decodeTimeout = new Promise((resolve) => {
-      window.setTimeout(resolve, 3000);
-    });
-
-    return Promise.race([img.decode(), decodeTimeout]).catch(() => undefined);
-  };
-
-  const waitForDomImage = (img) =>
-    new Promise((resolve) => {
-      if (img.complete) {
-        decodeImage(img).then(resolve).catch(resolve);
-        return;
-      }
-
-      const timeoutId = window.setTimeout(() => {
-        img.removeEventListener("load", done);
-        img.removeEventListener("error", done);
-        resolve();
-      }, 15000);
-
-      const done = () => {
-        window.clearTimeout(timeoutId);
-        img.removeEventListener("load", done);
-        img.removeEventListener("error", done);
-        decodeImage(img).then(resolve).catch(resolve);
-      };
-
-      img.addEventListener("load", done, { once: true });
-      img.addEventListener("error", done, { once: true });
-    });
-
-  const pageLoaded =
-    document.readyState === "complete"
-      ? Promise.resolve()
-      : new Promise((resolve) => window.addEventListener("load", resolve, { once: true }));
-
-  const trackedImagePromises = portfolioImageElements.map((img) =>
-    waitForDomImage(img).finally(() => {
-      loadedImages += 1;
-      updateLoaderProgress(loadedImages, totalImages);
-
-      if (loadedImages === totalImages && document.readyState === "complete") {
-        hideLoader();
-      }
-    })
-  );
-
-  const allImagesLoaded = Promise.allSettled(trackedImagePromises);
-  const hideAfterReady = Promise.all([pageLoaded, allImagesLoaded]);
-  let loaderHidden = false;
-  let loaderFailSafeTimeoutId = null;
-
-  const hideLoader = () => {
-    if (loaderHidden) {
-      return;
-    }
-
-    loaderHidden = true;
-    if (loaderFailSafeTimeoutId !== null) {
-      window.clearTimeout(loaderFailSafeTimeoutId);
-      loaderFailSafeTimeoutId = null;
-    }
-    updateLoaderProgress(totalImages, totalImages);
-
-    if (pageLoader) {
-      pageLoader.classList.add("page-loader--finishing");
-      window.setTimeout(() => {
-        pageLoader.classList.add("page-loader--hidden");
-        pageLoader.setAttribute("aria-hidden", "true");
-      }, 140);
+      pageLoader.classList.add("page-loader--hidden");
+      pageLoader.setAttribute("aria-hidden", "true");
     }
 
     document.body.classList.remove("portfolio-loading");
-  };
+  } else {
+    const portfolioImageElements = Array.from(document.querySelectorAll(
+      ".portfolio__grid img, .about__image img, .header__image img, .contact__image img"
+    ));
+    const totalImages = portfolioImageElements.length;
+    let loadedImages = 0;
 
-  if (pageLoader) {
-    document.body.classList.add("portfolio-loading");
-    pageLoader.setAttribute("aria-hidden", "false");
+    const updateLoaderProgress = (loaded, total) => {
+      const progress = total === 0 ? 100 : Math.round((loaded / total) * 100);
+      const progressValue = `${progress}%`;
 
-    // Failsafe for mobile browsers: never let loader block page forever.
-    loaderFailSafeTimeoutId = window.setTimeout(() => {
-      hideLoader();
-    }, LOADER_MAX_WAIT_MS);
+      if (pageLoader) {
+        pageLoader.style.setProperty("--load-progress", progressValue);
+      }
+
+      if (loaderProgressBar) {
+        loaderProgressBar.style.width = progressValue;
+      }
+
+      if (loaderProgressText) {
+        loaderProgressText.textContent = progressValue;
+      }
+    };
+
+    updateLoaderProgress(0, totalImages);
+
+    const decodeImage = (img) => {
+      if (!img.decode) {
+        return Promise.resolve();
+      }
+
+      const decodeTimeout = new Promise((resolve) => {
+        window.setTimeout(resolve, 3000);
+      });
+
+      return Promise.race([img.decode(), decodeTimeout]).catch(() => undefined);
+    };
+
+    const waitForDomImage = (img) =>
+      new Promise((resolve) => {
+        if (img.complete) {
+          decodeImage(img).then(resolve).catch(resolve);
+          return;
+        }
+
+        const timeoutId = window.setTimeout(() => {
+          img.removeEventListener("load", done);
+          img.removeEventListener("error", done);
+          resolve();
+        }, 15000);
+
+        const done = () => {
+          window.clearTimeout(timeoutId);
+          img.removeEventListener("load", done);
+          img.removeEventListener("error", done);
+          decodeImage(img).then(resolve).catch(resolve);
+        };
+
+        img.addEventListener("load", done, { once: true });
+        img.addEventListener("error", done, { once: true });
+      });
+
+    const pageLoaded =
+      document.readyState === "complete"
+        ? Promise.resolve()
+        : new Promise((resolve) => window.addEventListener("load", resolve, { once: true }));
+
+    const trackedImagePromises = portfolioImageElements.map((img) =>
+      waitForDomImage(img).finally(() => {
+        loadedImages += 1;
+        updateLoaderProgress(loadedImages, totalImages);
+
+        if (loadedImages === totalImages && document.readyState === "complete") {
+          hideLoader();
+        }
+      })
+    );
+
+    const allImagesLoaded = Promise.allSettled(trackedImagePromises);
+    const hideAfterReady = Promise.all([pageLoaded, allImagesLoaded]);
+    let loaderHidden = false;
+    let loaderFailSafeTimeoutId = null;
+
+    const hideLoader = () => {
+      if (loaderHidden) {
+        return;
+      }
+
+      loaderHidden = true;
+      if (loaderFailSafeTimeoutId !== null) {
+        window.clearTimeout(loaderFailSafeTimeoutId);
+        loaderFailSafeTimeoutId = null;
+      }
+      updateLoaderProgress(totalImages, totalImages);
+
+      if (pageLoader) {
+        pageLoader.classList.add("page-loader--finishing");
+        window.setTimeout(() => {
+          pageLoader.classList.add("page-loader--hidden");
+          pageLoader.setAttribute("aria-hidden", "true");
+        }, 140);
+      }
+
+      document.body.classList.remove("portfolio-loading");
+    };
+
+    if (pageLoader) {
+      document.body.classList.add("portfolio-loading");
+      pageLoader.setAttribute("aria-hidden", "false");
+
+      // Failsafe: never let loader block page forever.
+      loaderFailSafeTimeoutId = window.setTimeout(() => {
+        hideLoader();
+      }, LOADER_MAX_WAIT_MS);
+    }
+
+    hideAfterReady.then(hideLoader);
   }
-
-  hideAfterReady.then(hideLoader);
 }
 
 const quickLinkButtons = document.querySelectorAll(".quick-links-toggle");
