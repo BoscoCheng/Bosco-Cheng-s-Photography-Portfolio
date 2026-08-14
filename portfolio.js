@@ -195,10 +195,6 @@ const clearStabilizers = () => {
 };
 
 const primeImagesBeforeTarget = (targetSelector) => {
-  if (!isSmallViewport) {
-    return;
-  }
-
   const targetIndex = portfolioSectionOrder.indexOf(targetSelector);
   if (targetIndex <= 0) {
     return;
